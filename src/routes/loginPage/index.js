@@ -1,4 +1,4 @@
-import { useContext } from "react";
+import { useContext, useState } from "react";
 import OutlineButton from "../../components/outlineButton";
 import OutlineInput from "../../components/outlineInput";
 import JoinPage from "../joinPage";
@@ -11,6 +11,9 @@ import PlainButton from "../../components/plainButton";
 /// 로그인페이지
 const LoginPage = () => {
     const { pushAndUtilRemoved, push, pop } = useContext(ContextRouter);
+    const [id, setId] = useState('');
+    const [passwd, setPasswd] = useState('');
+
     return (<div className={style.LoginPage}>
         <div className={style.LoginBox}>
             <div className={style.LoginBoxText}>
@@ -28,7 +31,10 @@ const LoginPage = () => {
                     회원가입
                 </a>
             </p>
-            <OutlineButton onClick={() => pushAndUtilRemoved(ProductListPage.name)}>
+            <OutlineButton onClick={() => {
+                //id.length || passwd.length < 11 ? window.confirm("휴대전화 및 패스워드를 입력해주세요.") : null
+                pushAndUtilRemoved(ProductListPage.name)
+            }}>
                 로그인
             </OutlineButton>
         </div>
