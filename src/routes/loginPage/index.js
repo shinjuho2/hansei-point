@@ -15,7 +15,7 @@ const LoginPage = () => {
     const { pushAndUtilRemoved, push, pop } = useContext(ContextRouter);
     const { storeLoginData } = useContext(ContextStore);
     const [phoneNumber, setPhoneNumber] = useState('');
-    const [userPw, setUserPw] = useState('');
+    const [password, setUserPw] = useState('');
     return (<div className={style.LoginPage}>
         <div className={style.LoginBox}>
             <div className={style.LoginBoxText}>
@@ -32,8 +32,8 @@ const LoginPage = () => {
                 onInput={(value) => setPhoneNumber(value.replace(/[^0-9]/g, '').slice(0, 11))}
             />
             <OutlineInput
-                value={userPw}
-                className={userPw.LoginInput}
+                value={password}
+                className={password.LoginInput}
                 type='password'
                 placeholder='패스워드'
                 onInput={setUserPw}
@@ -45,7 +45,7 @@ const LoginPage = () => {
                 </a>
             </p>
             <OutlineButton onClick={async () => {
-                if (phoneNumber.length === 0 || userPw === 0) {
+                if (phoneNumber.length === 0 || password === 0) {
                     alert('휴대전화 및 패스워드를 입력해주세여');
                     return;
                 }
@@ -55,12 +55,12 @@ const LoginPage = () => {
                     return;
                 }
 
-                if (userPw.length < 6) {
+                if (password.length < 6) {
                     alert('패스워드가 올바르지 않습니다');
                     return;
                 }
 
-                const resp = await ApiLogin(phoneNumber, userPw);
+                const resp = await ApiLogin(phoneNumber, password);
                 if (resp.code === '0000') {
                     storeLoginData(resp.data);
                     pushAndUtilRemoved(ProductListPage.name)
