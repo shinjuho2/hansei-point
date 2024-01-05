@@ -34,10 +34,10 @@ const initProductData = async () => {
 };
 
 const db = nodb.getInstance();
-db.createFile("user",
-    { name: "userId", primary: true },
+db.createFile("member",
+    { name: "memberId", primary: true },
     { name: "phoneNumber", primary: true },
-    { name: "userPw" },
+    { name: "password" },
     { name: "name" },
     { name: "point" },
 )
@@ -53,7 +53,7 @@ db.createFile("product",
     .catch(initProductData);
 db.createFile("my_product",
     { name: "idx", primary: true },
-    { name: "userId" },
+    { name: "memberId" },
     { name: "product_id" },
 )
     .then(() => { })
@@ -85,10 +85,10 @@ const server = http.createServer(async (req, res) => {
     try {
 
         if (req.method === "GET") {
-            if (/\/api\/hansei\/user\/([0-9]{1,})\/point/.test(pathname)) {
-                const userId = +(pathname.replace(/\/api\/hansei\/user\/([0-9]{1,})\/point/, (p0, p1) => p1));
+            if (/\/api\/hansei\/member\/([0-9]{1,})\/point/.test(pathname)) {
+                const memberId = +(pathname.replace(/\/api\/hansei\/member\/([0-9]{1,})\/point/, (p0, p1) => p1));
 
-                const data = await db.selectOne("user", (data) => data.userId === userId);
+                const data = await db.selectOne("member", (data) => data.memberId === memberId);
                 res.writeHead(200, commonHeader);
                 return res.end(JSON.stringify({
                     code: '0000',
@@ -103,9 +103,9 @@ const server = http.createServer(async (req, res) => {
                     message: '',
                     data: datas,
                 }));
-            } else if (/\/api\/hansei\/user\/([0-9]{1,})\/orders/.test(pathname)) {
-                const userId = +(pathname.replace(/\/api\/hansei\/user\/([0-9]{1,})\/orders/, (p0, p1) => p1));
-                const datas = await db.select("my_product", (data) => data.userId === userId);
+            } else if (/\/api\/hansei\/member\/([0-9]{1,})\/orders/.test(pathname)) {
+                const memberId = +(pathname.replace(/\/api\/hansei\/member\/([0-9]{1,})\/orders/, (p0, p1) => p1));
+                const datas = await db.select("my_product", (data) => data.memberId === memberId);
                 const result = [];
                 for (var i = 0; i < datas.length; i++) {
                     var product = await db.selectOne("product", (data) => data.product_id === datas[i].product_id);
@@ -140,7 +140,7 @@ const server = http.createServer(async (req, res) => {
             }));
 
             if (pathname.startsWith("/api/hansei/login")) {
-                const datas = await db.select("user", (data) => data.phoneNumber === postdata.phoneNumber && data.password === postdata.password);
+                const datas = await db.select("member", (data) => data.phoneNumber === postdata.phoneNumber && data.password === postdata.password);
                 if (datas.length === 0) {
                     res.writeHead(404, commonHeader);
                     return res.end(JSON.stringify({
@@ -155,14 +155,14 @@ const server = http.createServer(async (req, res) => {
                         data: datas[0],
                     }));
                 }
-            } else if (/\/api\/hansei\/user\/([0-9]{1,})\/point/.test(pathname)) {
-                const phoneNumber = pathname.replace(/\/api\/hansei\/user\/([0-9]{1,})\/point/, (p0, p1) => p1);
-                const data = await db.selectOne("user", (data) => {
+            } else if (/\/api\/hansei\/member\/([0-9]{1,})\/point/.test(pathname)) {
+                const phoneNumber = pathname.replace(/\/api\/hansei\/member\/([0-9]{1,})\/point/, (p0, p1) => p1);
+                const data = await db.selectOne("member", (data) => {
                     return data.phoneNumber === phoneNumber;
                 });
                 if (data) {
                     data.point += postdata.point;
-                    db.updateData("user", data);
+                    db.updateData("member", data);
                     res.writeHead(200, commonHeader);
                     return res.end(JSON.stringify({
                         code: '0000',
@@ -170,11 +170,11 @@ const server = http.createServer(async (req, res) => {
                         data: data.point,
                     }));
                 }
-            } else if (/\/api\/hansei\/user\/([0-9]{1,})\/order/.test(pathname)) {
-                const userId = +(pathname.replace(/\/api\/hansei\/user\/([0-9]{1,})\/order/, (p0, p1) => p1));
-                const userData = await db.selectOne("user", (data) => data.userId === userId);
+            } else if (/\/api\/hansei\/member\/([0-9]{1,})\/order/.test(pathname)) {
+                const memberId = +(pathname.replace(/\/api\/hansei\/member\/([0-9]{1,})\/order/, (p0, p1) => p1));
+                const memberData = await db.selectOne("member", (data) => data.memberId === memberId);
                 const productData = await db.selectOne("product", (data) => data.product_id === postdata.productId);
-                if (userData.point < productData.product_price) {
+                if (memberData.point < productData.product_price) {
                     res.writeHead(404, commonHeader);
                     return res.end(JSON.stringify({
                         code: '1001',
@@ -183,20 +183,20 @@ const server = http.createServer(async (req, res) => {
                 }
                 await db.insertData("my_product", {
                     idx: Date.now(),
-                    userId,
+                    memberId: memberId,
                     product_id: productData.product_id,
                 });
-                await db.updateData("user", {
-                    ...userData,
-                    point: userData.point - productData.product_price,
+                await db.updateData("member", {
+                    ...memberData,
+                    point: memberData.point - productData.product_price,
                 });
                 res.writeHead(200, commonHeader);
                 return res.end(JSON.stringify({
                     code: '0000',
                     message: '',
                 }));
-            } else if (pathname.startsWith("/api/hansei/user")) {
-                const datas = await db.select("user", (data) => data.phoneNumber === postdata.phoneNumber);
+            } else if (pathname.startsWith("/api/hansei/member")) {
+                const datas = await db.select("member", (data) => data.phoneNumber === postdata.phoneNumber);
                 if (datas.length !== 0) {
                     res.writeHead(404, commonHeader);
                     return res.end(JSON.stringify({
@@ -205,8 +205,8 @@ const server = http.createServer(async (req, res) => {
                     }));
                 }
 
-                var obj = Object.assign(postdata, { userId: Date.now(), point: 1000 });
-                await db.insertData("user", obj);
+                var obj = Object.assign(postdata, { memberId: Date.now(), point: 1000 });
+                await db.insertData("member", obj);
                 res.writeHead(200, commonHeader);
                 return res.end(JSON.stringify({
                     code: '0000',
@@ -214,16 +214,17 @@ const server = http.createServer(async (req, res) => {
                     data: obj,
                 }));
             }
-        } else if (req.method === "DELETE") {
-            if (/\/api\/hansei\/user\/([0-9]{1,})\/order\/([0-9]{1,})/.test(pathname)) {
-                let userId = 0, order_id = 0;
-                (pathname.replace(/\/api\/hansei\/user\/([0-9]{1,})\/order\/([0-9]{1,})/, (p0, p1, p2) => {
+        } else if (req.method === 
+            "DELETE") {
+            if (/\/api\/hansei\/member\/([0-9]{1,})\/order\/([0-9]{1,})/.test(pathname)) {
+                let memberId = 0, order_id = 0;
+                (pathname.replace(/\/api\/hansei\/member\/([0-9]{1,})\/order\/([0-9]{1,})/, (p0, p1, p2) => {
                     console.log(p0, p1, p2)
-                    userId = +p1;
+                    memberId = +p1;
                     order_id = +p2;
                     return p0;
                 }));
-                const userData = await db.selectOne("user", (data) => data.userId === userId);
+                const memberData = await db.selectOne("member", (data) => data.memberId === memberId);
                 const orderData = await db.selectOne("my_product", (data) => data.idx === order_id);
                 if (!orderData) {
                     res.writeHead(404, commonHeader);
@@ -234,9 +235,9 @@ const server = http.createServer(async (req, res) => {
                 }
                 const productData = await db.selectOne("product", (data) => data.product_id === orderData.product_id);
                 await db.deleteData("my_product", orderData);
-                await db.updateData("user", {
-                    ...userData,
-                    point: userData.point + productData.product_price,
+                await db.updateData("member", {
+                    ...memberData,
+                    point: memberData.point + productData.product_price,
                 });
                 res.writeHead(200, commonHeader);
                 return res.end(JSON.stringify({
